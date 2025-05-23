@@ -215,15 +215,6 @@
         background-color: var(--primary-hover);
     }
 
-    .btn-secondary {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-
-    .btn-secondary:hover {
-        background-color: var(--secondary-hover);
-    }
-
     :global(.gridjs-container) {
         font-size: 0.875rem;
         border: none !important;

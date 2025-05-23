@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import type { PageData } from './$types';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { getBlogContent, resetAll, sendMessage, store, resetComplete, resetError } from '$s/chat';
 	import PdfViewer from '$c/PdfViewer.svelte';
@@ -17,21 +17,37 @@
 	import Diagram from '$c/Diagram.svelte';
 	import html2pdf from 'html2pdf.js';
 
-	let showTooltip = false;
-	let tooltipX = 0;
-	let tooltipY = 0;
-
 	const dispatch = createEventDispatcher();
-	let selectedText = '';
+
 	let isCampaign = false;
 	let isDocumentVisible = false;
 
 	$: blogContent = $store.blogContent;
 	$: diagramContent = $store.diagramContent;
 
+	let alertRef: HTMLDivElement | null = null;
+	let alertTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	// Scroll to alert when it appears
+	$: if (($store.isCompleted || $store.error) && alertRef) {
+		alertRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	}
+
+	$: if ($store.isCompleted || $store.error) {
+		if (alertTimeout) clearTimeout(alertTimeout);
+		alertTimeout = setTimeout(() => {
+			if ($store.isCompleted) resetComplete();
+			if ($store.error) resetError();
+		}, 15000);
+	}
+
 	onMount(async () => {
 		const queryParams = new URLSearchParams(window.location.search);
 		isCampaign = queryParams.get('campaign') === 'true';
+	});
+
+	onDestroy(() => {
+		if (alertTimeout) clearTimeout(alertTimeout);
 	});
 
 	export let data: PageData;
@@ -44,9 +60,6 @@
 		sendMessage({ role: 'user', content }, { useStreaming, documentId: docs.id, image: false });
 	}
 
-	function handleSearch() {
-		goto('/openChat');
-	}
 	beforeNavigate(resetAll);
 
 	function exportDoc() {
@@ -56,16 +69,31 @@
 
 <div class="app-container">
 	<!-- Top Section - Only visible when there's an error -->
-	{#if data.error}
-		<div class="top-section">
-			<div class="error-message">
-				<svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-				</svg>
-				{data.error}
-			</div>
-		</div>
-	{/if}
+	<div
+		class="alerts-container"
+		bind:this={alertRef}
+	>
+		{#if $store.isCompleted}
+			<Alert type="success" onDismiss={resetComplete}>
+				<div class="alert-content">
+					<svg class="alert-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+					</svg>
+					<span>Created Successfully!</span>
+				</div>
+			</Alert>
+		{/if}
+		{#if $store.error}
+			<Alert type="error" onDismiss={resetError}>
+				<div class="alert-content">
+					<svg class="alert-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<span>Failed with error!</span>
+				</div>
+			</Alert>
+		{/if}
+	</div>
 
 	<!-- Main Content -->
 	<div class="main-content">
@@ -140,14 +168,13 @@
 
 <style>
 	.app-container {
-		height: 100vh;
 		background-color: #f8fafc;
 		padding: 1.5rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
 		font-family: 'Inter', system-ui, -apple-system, sans-serif;
-		overflow-x: hidden;
+		overflow: hidden;
 	}
 
 	.top-section {
@@ -177,14 +204,43 @@
 		display: grid;
 		grid-template-columns: 1fr 1.5fr;
 		gap: 1.5rem;
-		height: calc(100vh - 140px);
-		overflow-x: hidden;
+		height: calc(100vh - 3rem);
+		overflow: hidden;
 	}
 
 	.alerts-container {
+		position: fixed;
+		top: 1.5rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 50;
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+		max-width: 40rem;
+		width: 100%;
+		align-items: center;
+		pointer-events: none;
+	}
+
+	.alert-content {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.alert-icon {
+		width: 1.5rem;
+		height: 1.5rem;
+		flex-shrink: 0;
+	}
+
+	.alert-icon.success {
+		color: #059669;
+	}
+
+	.alert-icon.error {
+		color: #dc2626;
 	}
 
 	.actions-container {
@@ -241,6 +297,8 @@
 		transition: all 0.3s ease;
 		display: flex;
 		flex-direction: column;
+		height: 100%;
+		overflow: hidden;
 	}
 
 	.chat-section.expanded {
@@ -310,6 +368,7 @@
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 		overflow: auto;
 		padding: 1.5rem;
+		height: 100%;
 	}
 
 	.image-container {
@@ -319,11 +378,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		padding: 1rem;
 	}
 
 	.document-image {
 		max-width: 100%;
-		height: auto;
+		max-height: 100%;
 		object-fit: contain;
 		border-radius: 0.5rem;
 	}
@@ -379,5 +439,47 @@
 	:global(.tooltip button:hover) {
 		background-color: #f8fafc;
 		transform: translateY(-1px);
+	}
+
+	:global(.alert) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background-color: #d1fae5;
+		border-left: 5px solid #10b981;
+		color: #065f46;
+		border-radius: 0.75rem;
+		box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+		padding: 1rem 1.5rem;
+		font-size: 1rem;
+		font-weight: 500;
+		animation: slideIn 0.3s ease-out;
+		min-width: 28rem;
+		max-width: 40rem;
+	}
+
+	.alert-close {
+		background: none;
+		border: none;
+		color: #065f46;
+		font-size: 1.25rem;
+		cursor: pointer;
+		margin-left: 1rem;
+		transition: color 0.2s;
+	}
+
+	.alert-close:hover {
+		color: #047857;
+	}
+
+	@keyframes slideIn {
+		from {
+			transform: translateX(100%);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
 	}
 </style>

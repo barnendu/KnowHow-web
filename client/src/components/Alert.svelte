@@ -26,7 +26,7 @@
 		<div
 			on:keydown={handleDismiss}
 			on:click={handleDismiss}
-			class="absolute cursor-pointer inset-y-0 right-2 flex flex-col justify-center text-red font-bold"
+			class="absolute cursor-pointer ml-5 pl-2 inset-y-0 right-2 flex flex-col justify-center text-red font-bold"
 		>
 			X
 		</div>

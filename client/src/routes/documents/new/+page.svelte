@@ -27,7 +27,7 @@
 	beforeNavigate(clearErrors);
 </script>
 
-<div class="container mx-auto h-screen">
+<div class="container mx-auto">
 	<div class="w-full max-w-md mx-auto p-6">
 		<h2 class="text-3xl font-bold m-10">Upload a Document</h2>
 		<form on:submit|preventDefault={handleSubmit}>
