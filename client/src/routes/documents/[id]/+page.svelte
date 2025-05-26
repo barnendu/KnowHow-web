@@ -68,6 +68,20 @@
 </script>
 
 <div class="app-container">
+	<!-- Loading Indicator -->
+	{#if $store.loading}
+		<div class="loading-indicator" transition:fly={{ y: -20, duration: 300 }}>
+			<div class="loading-content">
+				<div class="loading-spinner">
+					<svg class="spinner" viewBox="0 0 50 50">
+						<circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+					</svg>
+				</div>
+				<span class="loading-text">Processing your request...</span>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Top Section - Only visible when there's an error -->
 	<div
 		class="alerts-container"
@@ -167,7 +181,41 @@
 </div>
 
 <style>
+	/* Custom Scrollbar Styles - Cross Platform */
+	:global(*) {
+		scrollbar-width: thin;
+		scrollbar-color: #cbd5e1 #f1f5f9;
+	}
+
+	:global(*::-webkit-scrollbar) {
+		width: 8px;
+		height: 8px;
+	}
+
+	:global(*::-webkit-scrollbar-track) {
+		background: #f1f5f9;
+		border-radius: 4px;
+	}
+
+	:global(*::-webkit-scrollbar-thumb) {
+		background: #cbd5e1;
+		border-radius: 4px;
+		transition: background 0.2s ease;
+	}
+
+	:global(*::-webkit-scrollbar-thumb:hover) {
+		background: #94a3b8;
+	}
+
+	/* For Windows High Contrast Mode */
+	@media (forced-colors: active) {
+		:global(*::-webkit-scrollbar-thumb) {
+			border: 1px solid ButtonText;
+		}
+	}
+
 	.app-container {
+		height: 100vh;
 		background-color: #f8fafc;
 		padding: 1.5rem;
 		display: flex;
@@ -175,6 +223,7 @@
 		gap: 1.5rem;
 		font-family: 'Inter', system-ui, -apple-system, sans-serif;
 		overflow: hidden;
+		box-sizing: border-box;
 	}
 
 	.top-section {
@@ -206,6 +255,7 @@
 		gap: 1.5rem;
 		height: calc(100vh - 3rem);
 		overflow: hidden;
+		min-height: 0;
 	}
 
 	.alerts-container {
@@ -299,6 +349,7 @@
 		flex-direction: column;
 		height: 100%;
 		overflow: hidden;
+		min-height: 0;
 	}
 
 	.chat-section.expanded {
@@ -369,6 +420,8 @@
 		overflow: auto;
 		padding: 1.5rem;
 		height: 100%;
+		min-height: 0;
+		scroll-behavior: smooth;
 	}
 
 	.image-container {
@@ -481,5 +534,77 @@
 			transform: translateX(0);
 			opacity: 1;
 		}
+	}
+
+	.loading-indicator {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+		background: linear-gradient(90deg, #3b82f6, #2563eb);
+		box-shadow: 0 2px 10px rgba(37, 99, 235, 0.2);
+	}
+
+	.loading-content {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.75rem;
+		gap: 1rem;
+	}
+
+	.loading-spinner {
+		width: 24px;
+		height: 24px;
+	}
+
+	.spinner {
+		animation: rotate 2s linear infinite;
+		width: 24px;
+		height: 24px;
+	}
+
+	.spinner-path {
+		stroke: white;
+		stroke-linecap: round;
+		animation: dash 1.5s ease-in-out infinite;
+	}
+
+	.loading-text {
+		color: white;
+		font-size: 0.9375rem;
+		font-weight: 500;
+	}
+
+	@keyframes rotate {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes dash {
+		0% {
+			stroke-dasharray: 1, 150;
+			stroke-dashoffset: 0;
+		}
+		50% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -35;
+		}
+		100% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -124;
+		}
+	}
+
+	/* Smooth scrolling for the entire page */
+	:global(html) {
+		scroll-behavior: smooth;
+	}
+
+	/* Improve touch scrolling on mobile devices */
+	:global(*:not(.no-touch-scroll)) {
+		-webkit-overflow-scrolling: touch;
 	}
 </style>

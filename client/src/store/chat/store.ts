@@ -164,8 +164,9 @@ const createOpenConversation = async () => {
 
 const createJiraTicket = async (payload: any) => {
 	try {
+		set({ loading: true });
 		const { data } = await api.post('/integration/jira', payload);
-		set({ isCompleted: true });
+		set({ isCompleted: true, loading: false });
 		return data;
 	} catch (err) {
 		console.error(err);

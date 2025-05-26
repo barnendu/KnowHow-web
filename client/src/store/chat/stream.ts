@@ -142,9 +142,12 @@ export const sendMessage = async (userMessage: Message, opts: MessageOptions)=> 
 			} else {
 				await readResponse(reader, responseMessage);		
 			}
+			set({ loading: false });
 		}
 	} catch (err) {
 		set({ error: getErrorMessage(err), loading: false });
+	} finally{
+		set({ loading: false });
 	}
 };
 
