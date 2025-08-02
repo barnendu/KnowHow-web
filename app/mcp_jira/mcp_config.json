@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "jira": {
+      "command": "python",
+      "args": ["app/web/mcp_jira_server.py"],
+      "env": {
+        "JIRA_URL": "${JIRA_URL}",
+        "EMAIL": "${EMAIL}",
+        "ATLASSIAN_API_TOKEN": "${ATLASSIAN_API_TOKEN}"
+      }
+    }
+  }
+} 
