@@ -1,5 +1,4 @@
 from typing import Dict, List
-from langchain.schema.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from app.web.db import db
@@ -9,11 +8,11 @@ from app.web.db.models import Conversation
 
 def get_messages_by_conversation_id(
         conversation_id: str
-) -> AIMessage | HumanMessage | SystemMessage:
+) -> List[AIMessage | HumanMessage | SystemMessage]:
     messages = (
         db.session.query(Message)
         .filter_by(conversation_id=conversation_id)
-        .order_by(Message.created_on.desc())
+        .order_by(Message.created_on.asc())
 
     )
     return [message.as_lc_message() for message in messages]

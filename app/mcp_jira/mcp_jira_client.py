@@ -3,8 +3,6 @@
 MCP Jira Client Implementation
 Client for communicating with the custom Jira MCP server
 """
-
-import asyncio
 import json
 import logging
 import subprocess
